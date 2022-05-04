@@ -1,3 +1,3 @@
 module github.com/cheshir/ttlcache
 
-go 1.15
+go 1.17
