@@ -101,10 +101,7 @@ func TestClose(t *testing.T) {
 	c.Set(IntKey(3), 3, 0)
 	c.Set(IntKey(4), 4, 0)
 
-	err := c.Close()
-	if err != nil {
-		t.Error("Unexpected error")
-	}
+	c.Close()
 
 	_, ok := c.Get(IntKey(1))
 	if ok {

@@ -38,9 +38,9 @@ func New(resolution time.Duration) *Cache {
 // The second one is an existence flag like in the map.
 func (c *Cache) Get(key uint64) (interface{}, bool) {
 	c.mu.RLock()
-	cacheItem, ok := c.items[key]
-	c.mu.RUnlock()
+	defer c.mu.RUnlock()
 
+	cacheItem, ok := c.items[key]
 	if !ok {
 		return nil, false
 	}
@@ -57,48 +57,49 @@ func (c *Cache) Set(key uint64, value interface{}, ttl time.Duration) {
 	}
 
 	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	c.items[key] = cacheItem
-	c.mu.Unlock()
 }
 
 // Delete removes record from storage.
 func (c *Cache) Delete(key uint64) {
 	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	delete(c.items, key)
-	c.mu.Unlock()
 }
 
 // Clear removes all items from storage and leaves the cleanup manager running.
 func (c *Cache) Clear() {
 	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	c.items = make(map[uint64]item, defaultCapacity)
-	c.mu.Unlock()
 }
 
 // Close stops cleanup manager and removes records from storage.
-func (c *Cache) Close() error {
-	close(c.done)
-
+func (c *Cache) Close() {
 	c.mu.Lock()
-	c.items = nil
-	c.mu.Unlock()
+	defer c.mu.Unlock()
 
-	return nil
+	close(c.done)
+	c.items = nil
 }
 
 // cleanup removes outdated items from the storage.
 // It triggers stop the world for the cache.
 func (c *Cache) cleanup() {
-	now := time.Now().UnixNano()
 	c.mu.Lock()
+
+	defer c.mu.Unlock()
+	now := time.Now().UnixNano()
 
 	for key, item := range c.items {
 		if item.deadline < now {
 			delete(c.items, key)
 		}
 	}
-
-	c.mu.Unlock()
 }
 
 func cleaner(c *Cache, resolution time.Duration) {
