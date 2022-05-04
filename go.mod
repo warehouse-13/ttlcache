@@ -1,3 +1,3 @@
-module github.com/cheshir/ttlcache
+module github.com/warehouse-13/ttlcache
 
 go 1.17
