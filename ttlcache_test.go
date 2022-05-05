@@ -35,6 +35,28 @@ func TestCache_GetSet(t *testing.T) {
 	}
 }
 
+func TestCache_List(t *testing.T) {
+	c := New(time.Millisecond)
+
+	count := 5
+
+	for i := 0; i < count; i++ {
+		c.Set(IntKey(i), i, 0)
+	}
+
+	objs := c.List()
+	if len(objs) != count {
+		t.Errorf("incorrect value: got: %v expected: %v", len(objs), count)
+	}
+
+	for i := 0; i < count; i++ {
+		_, ok := objs[IntKey(i)]
+		if !ok {
+			t.Error("storage missing expected value")
+		}
+	}
+}
+
 func TestCache_Delete(t *testing.T) {
 	key := StringKey("key")
 	value := "value"

@@ -11,8 +11,10 @@ const defaultCapacity = 16 // Just to avoid extra allocations in most of the cas
 type Cache struct {
 	done  chan struct{}
 	mu    sync.RWMutex
-	items map[uint64]item
+	items storage
 }
+
+type storage map[uint64]item
 
 type item struct {
 	deadline int64 // Unix nano
@@ -46,6 +48,14 @@ func (c *Cache) Get(key uint64) (interface{}, bool) {
 	}
 
 	return cacheItem.value, true
+}
+
+// List returns all items in the storage
+func (c *Cache) List() storage {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return c.items
 }
 
 // Set adds value to the cache with given ttl.
